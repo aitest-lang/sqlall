@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Interview Playbook — Pareto Coverage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1110;
+  --surface: #141a18;
+  --surface-2: #1a2220;
+  --surface-3: #232c29;
+  --border: #2a3330;
+  --border-soft: #1f2826;
+  --fg: #e8ede9;
+  --fg-dim: #b8c2bd;
+  --muted: #7a857f;
+  --accent: #f0b429;
+  --accent-soft: rgba(240, 180, 41, 0.1);
+  --accent-2: #4cc4a4;
+  --accent-2-soft: rgba(76, 196, 164, 0.1);
+  --accent-3: #e8854a;
+  --danger: #e85d5d;
+  --code-bg: #0a0e0d;
+  --code-keyword: #f0b429;
+  --code-function: #4cc4a4;
+  --code-string: #b8d977;
+  --code-number: #e8854a;
+  --code-comment: #6a7570;
+  --code-punct: #c9d1d0;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+body {
+  font-family: var(--font-display);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 15% 20%, rgba(240, 180, 41, 0.05), transparent 35%),
+    radial-gradient(circle at 85% 60%, rgba(76, 196, 164, 0.04), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13, 17, 16, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.search-wrap {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 9px 14px 9px 38px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus { 
+  border-color: var(--accent); 
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.search-input::placeholder { color: var(--muted); }
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-shortcut {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.progress-bar {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  width: 0;
+  transition: width 0.1s ease-out;
+}
+
+.layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 56px;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar {
+  position: sticky;
+  top: 65px;
+  height: calc(100vh - 65px);
+  overflow-y: auto;
+  padding: 32px 0 32px 0;
+  border-right: 1px solid var(--border-soft);
+}
+
+.sidebar-section { margin-bottom: 20px; }
+
+.sidebar-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  padding: 0 16px 8px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 16px;
+  color: var(--fg-dim);
+  text-decoration: none;
+  font-size: 13.5px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.sidebar-link:hover {
+  color: var(--fg);
+  background: var(--surface);
+}
+
+.sidebar-link.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sidebar-num {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  width: 18px;
+}
+
+.sidebar-link.active .sidebar-num { color: var(--accent); }
+
+.main {
+  padding: 40px 0 120px;
+  min-width: 0;
+}
+
+.hero {
+  padding: 24px 0 56px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 56px;
+}
+
+.hero-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.hero-label::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero-title {
+  font-size: clamp(38px, 5.5vw, 64px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin-bottom: 22px;
+  max-width: 900px;
+}
+
+.hero-title .accent {
+  background: linear-gradient(135deg, var(--accent) 20%, var(--accent-3) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-desc {
+  font-size: 16.5px;
+  color: var(--fg-dim);
+  max-width: 640px;
+  margin-bottom: 36px;
+  line-height: 1.65;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 20px;
+  max-width: 720px;
+}
+
+.stat {
+  border-left: 2px solid var(--border);
+  padding-left: 16px;
+  transition: border-color 0.2s;
+}
+
+.stat:hover { border-left-color: var(--accent); }
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.topic {
+  margin-bottom: 88px;
+  scroll-margin-top: 80px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.topic.visible { opacity: 1; transform: translateY(0); }
+
+.topic-head {
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.topic-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.topic-title {
+  font-size: clamp(28px, 3.5vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.topic-sub {
+  font-size: 16px;
+  color: var(--fg-dim);
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.callout {
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin: 18px 0;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  border: 1px solid;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.callout-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  padding-top: 3px;
+  min-width: 70px;
+}
+
+.callout.analogy { background: var(--accent-2-soft); border-color: rgba(76, 196, 164, 0.3); }
+.callout.analogy .callout-label { color: var(--accent-2); }
+.callout.tip { background: var(--accent-soft); border-color: rgba(240, 180, 41, 0.3); }
+.callout.tip .callout-label { color: var(--accent); }
+.callout.warn { background: rgba(232, 93, 93, 0.08); border-color: rgba(232, 93, 93, 0.3); }
+.callout.warn .callout-label { color: var(--danger); }
+
+.callout-content { flex: 1; }
+.callout-content p { margin-bottom: 6px; }
+.callout-content p:last-child { margin-bottom: 0; }
+.callout-content code { 
+  font-family: var(--font-mono); 
+  background: rgba(255,255,255,0.07);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--fg);
+}
+
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 14px 0;
+  overflow: hidden;
+}
+
+.code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+}
+
+.code-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-label::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.copy-btn:hover { color: var(--fg); border-color: var(--accent); }
+.copy-btn.copied { color: var(--accent-2); border-color: var(--accent-2); }
+
+.code-block pre {
+  padding: 16px 20px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.code-block code { font-family: var(--font-mono); }
+
+.tok-keyword { color: var(--code-keyword); font-weight: 500; }
+.tok-function { color: var(--code-function); }
+.tok-string { color: var(--code-string); }
+.tok-number { color: var(--code-number); }
+.tok-comment { color: var(--code-comment); font-style: italic; }
+.tok-punct { color: var(--code-punct); }
+
+.diagram-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.diagram-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px 14px;
+  text-align: center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.diagram-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.diagram-card svg {
+  width: 100%;
+  height: 90px;
+  margin-bottom: 10px;
+}
+
+.diagram-label {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.diagram-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.flow-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 22px 0;
+  overflow-x: auto;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: max-content;
+  justify-content: center;
+}
+
+.flow-step {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.flow-step.highlight {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.flow-arrow {
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 18px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13.5px;
+}
+
+th, td {
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+th {
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface); }
+
+td code, th code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.subsection { margin: 32px 0 20px; }
+
+.subsection-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+
+.subsection-title::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+p { margin-bottom: 12px; }
+p code, li code {
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--accent);
+}
+
+ul, ol { margin: 10px 0 14px 20px; }
+li { margin-bottom: 6px; }
+
+.pattern {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin: 18px 0;
+}
+
+.pattern-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pattern-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.pattern-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pattern-desc {
+  color: var(--fg-dim);
+  font-size: 14px;
+  margin-bottom: 14px;
+  line-height: 1.55;
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 36px 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-mark {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.back-top {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 42px;
+  height: 42px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s;
+  color: var(--fg);
+  z-index: 50;
+}
+
+.back-top.visible { opacity: 1; pointer-events: auto; }
+.back-top:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+.topic.hidden, .subsection.hidden { display: none; }
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+  display: none;
+}
+
+.no-results.show { display: block; }
+
+.menu-toggle {
+  display: none;
+  width: 34px;
+  height: 34px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
+}
+
+@media (max-width: 1024px) {
+  .layout { grid-template-columns: 1fr; gap: 0; }
+  .sidebar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: 60vh;
+    background: var(--bg);
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    transform: translateY(-110%);
+    transition: transform 0.3s ease-out;
+    z-index: 90;
+    padding: 20px 0;
+  }
+  .sidebar.open { transform: translateY(0); }
+  .menu-toggle { display: flex; }
+}
+
+@media (max-width: 640px) {
+  .header-inner, .layout, .footer { padding-left: 18px; padding-right: 18px; }
+  .search-shortcut { display: none; }
+  .hero-title { font-size: 32px; }
+  .topic-title { font-size: 24px; }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+@media print {
+  .header, .sidebar, .back-top, .copy-btn, .search-wrap, .menu-toggle { display: none !important; }
+  .layout { grid-template-columns: 1fr; }
+  body { background: white; color: black; }
+  .topic { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <div class="logo">
+      <div class="logo-mark">SQL</div>
+      <span>Interview Playbook</span>
+    </div>
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search syntax, concepts, patterns..." autocomplete="off" />
+      <span class="search-shortcut">⌘ K</span>
+    </div>
+  </div>
+  <div class="progress-bar" id="progressBar"></div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <nav>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Query Basics</div>
+        <a href="#foundations" class="sidebar-link"><span class="sidebar-num">01</span>Foundations</a>
+        <a href="#joins" class="sidebar-link"><span class="sidebar-num">02</span>Joins</a>
+        <a href="#aggregation" class="sidebar-link"><span class="sidebar-num">03</span>Grouping & Aggregation</a>
+        <a href="#subqueries" class="sidebar-link"><span class="sidebar-num">04</span>Subqueries</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Advanced Query</div>
+        <a href="#window" class="sidebar-link"><span class="sidebar-num">05</span>Window Functions</a>
+        <a href="#cte" class="sidebar-link"><span class="sidebar-num">06</span>CTEs</a>
+        <a href="#set-ops" class="sidebar-link"><span class="sidebar-num">07</span>Set Operations</a>
+        <a href="#case" class="sidebar-link"><span class="sidebar-num">08</span>CASE & Conditionals</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Functions</div>
+        <a href="#strings" class="sidebar-link"><span class="sidebar-num">09</span>String Functions</a>
+        <a href="#dates" class="sidebar-link"><span class="sidebar-num">10</span>Date Functions</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Data & Schema</div>
+        <a href="#dml" class="sidebar-link"><span class="sidebar-num">11</span>DML</a>
+        <a href="#ddl" class="sidebar-link"><span class="sidebar-num">12</span>DDL & Schema</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Interview Prep</div>
+        <a href="#patterns" class="sidebar-link"><span class="sidebar-num">13</span>Common Patterns</a>
+        <a href="#performance" class="sidebar-link"><span class="sidebar-num">14</span>Performance</a>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="hero">
+      <div class="hero-label">PARETO-OPTIMIZED · v1.0</div>
+      <h1 class="hero-title">The SQL syntax that cracks <span class="accent">90% of interviews</span></h1>
+      <p class="hero-desc">
+        A focused reference covering the 20% of SQL that surfaces in 90% of interview questions — from foundational
+        SELECT through window functions, recursive CTEs, and the classic patterns recruiters love to ask.
+        Analogies where they help, diagrams where they clarify, runnable code everywhere it counts.
+      </p>
+      <div class="hero-stats">
+        <div class="stat"><div class="stat-value">14</div><div class="stat-label">Topics</div></div>
+        <div class="stat"><div class="stat-value">60+</div><div class="stat-label">Code Snippets</div></div>
+        <div class="stat"><div class="stat-value">10</div><div class="stat-label">Interview Patterns</div></div>
+        <div class="stat"><div class="stat-value">~90%</div><div class="stat-label">Coverage</div></div>
+      </div>
+    </section>
+
+    <section class="topic" id="foundations">
+      <div class="topic-head">
+        <span class="topic-num">01 / FOUNDATIONS</span>
+        <h2 class="topic-title">SELECT, WHERE, ORDER BY</h2>
+        <p class="topic-sub">The skeleton of every SQL query. Master the clause execution order first — most interview confusion comes from misunderstanding it.</p>
+      </div>
+
+      <div class="callout analogy">
+        <div class="callout-label">Analogy</div>
+        <div class="callout-content">
+          <p>Think of a SQL query like filtering a spreadsheet: <code>FROM</code> opens the sheet, <code>WHERE</code> applies a filter, <code>SELECT</code> picks which columns to show, <code>ORDER BY</code> sorts, and <code>LIMIT</code> keeps only the first N rows.</p>
+        </div>
+      </div>
+
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <span class="flow-step">FROM / JOIN</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">WHERE</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">GROUP BY</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">HAVING</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step highlight">SELECT</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">DISTINCT</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">ORDER BY</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">LIMIT</span>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label">Key Insight</div>
+        <div class="callout-content">
+          <p>SQL is evaluated in a different order than it's written. That's why you can't reference a column alias created in <code>SELECT</code> inside <code>WHERE</code> — <code>WHERE</code> runs <em>before</em> <code>SELECT</code>.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Syntax</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">SELECT DISTINCT column1, column2 AS alias_name
+FROM table_name
+WHERE condition
+ORDER BY column1 DESC, column2 ASC
+LIMIT 10 OFFSET 20;</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">WHERE filters — operators you must know</h3>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Operator</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>=</code> <code>&lt;&gt;</code> <code>&gt;</code> <code>&lt;</code></td><td>Comparison</td><td><code>WHERE age &gt; 25</code></td></tr>
+            <tr><td><code>AND</code> <code>OR</code> <code>NOT</code></td><td>Logical combine</td><td><code>WHERE dept='Eng' AND active=true</code></td></tr>
+            <tr><td><code>BETWEEN a AND b</code></td><td>Inclusive range</td><td><code>WHERE age BETWEEN 25 AND 35</code></td></tr>
+            <tr><td><code>IN (a, b, c)</code></td><td>Match any value</td><td><code>WHERE dept IN ('Eng','Sales')</code></td></tr>
+            <tr><td><code>LIKE</code></td><td>Pattern match (<code>%</code> any, <code>_</code> one)</td><td><code>WHERE name LIKE 'A%_n'</code></td></tr>
+            <tr><td><code>IS NULL</code> / <code>IS NOT NULL</code></td><td>NULL check (≠ <code>=</code>)</td><td><code>WHERE manager_id IS NULL</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Example</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Find active engineers over 30, ordered by hire date
+SELECT id, name, hire_date, salary
+FROM employees
+WHERE dept = 'Engineering'
+  AND age > 30
+  AND manager_id IS NOT NULL
+ORDER BY hire_date DESC, name ASC
+LIMIT 20;</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-label">Gotcha</div>
+        <div class="callout-content">
+          <p><code>WHERE age = NULL</code> always returns nothing. Use <code>IS NULL</code>. NULL behaves like "unknown" — it doesn't equal anything, including itself.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="joins">
+      <div class="topic-head">
+        <span class="topic-num">02 / JOINS</span>
+        <h2 class="topic-title">Combining Rows Across Tables</h2>
+        <p class="topic-sub">Joins are the most tested interview topic. Know each type's Venn diagram cold, and remember: JOINs combine rows horizontally; UNIONs combine them vertically.</p>
+      </div>
+
+      <div class="callout analogy">
+        <div class="callout-label">Analogy</div>
+        <div class="callout-content">
+          <p>Imagine two contact lists: one with names and phone numbers, another with names and emails. A JOIN merges them by matching the name. An <strong>INNER JOIN</strong> keeps only people in both lists. A <strong>LEFT JOIN</strong> keeps everyone from the first list, leaving email blank if missing.</p>
+        </div>
+      </div>
+
+      <div class="diagram-grid">
+        <div class="diagram-card">
+          <svg viewBox="0 0 200 90">
+            <defs><clipPath id="cj1"><circle cx="125" cy="45" r="32"/></clipPath></defs>
+            <circle cx="75" cy="45" r="32" fill="rgba(240,180,41,0.08)" stroke="rgba(240,180,41,0.5)" stroke-width="1.2"/>
+            <circle cx="125" cy="45" r="32" fill="rgba(76,196,164,0.08)" stroke="rgba(76,196,164,0.5)" stroke-width="1.2"/>
+            <circle cx="75" cy="45" r="32" fill="rgba(240,180,41,0.5)" clip-path="url(#cj1)"/>
+          </svg>
+          <div class="diagram-label">INNER JOIN</div>
+          <div class="diagram-desc">intersection only</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 200 90">
+            <defs><clipPath id="cj2"><circle cx="75" cy="45" r="32"/></clipPath></defs>
+            <circle cx="75" cy="45" r="32" fill="rgba(240,180,41,0.45)" stroke="rgba(240,180,41,0.7)" stroke-width="1.2"/>
+            <circle cx="125" cy="45" r="32" fill="rgba(76,196,164,0.18)" stroke="rgba(76,196,164,0.5)" stroke-width="1.2"/>
+            <circle cx="125" cy="45" r="32" fill="rgba(76,196,164,0.3)" clip-path="url(#cj2)"/>
+          </svg>
+          <div class="diagram-label">LEFT JOIN</div>
+          <div class="diagram-desc">all left + matched</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 200 90">
+            <defs><clipPath id="cj3"><circle cx="125" cy="45" r="32"/></clipPath></defs>
+            <circle cx="75" cy="45" r="32" fill="rgba(240,180,41,0.18)" stroke="rgba(240,180,41,0.5)" stroke-width="1.2"/>
+            <circle cx="125" cy="45" r="32" fill="rgba(76,196,164,0.45)" stroke="rgba(76,196,164,0.7)" stroke-width="1.2"/>
+            <circle cx="75" cy="45" r="32" fill="rgba(240,180,41,0.3)" clip-path="url(#cj3)"/>
+          </svg>
+          <div class="diagram-label">RIGHT JOIN</div>
+          <div class="diagram-desc">all right + matched</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 200 90">
+            <circle cx="75" cy="45" r="32" fill="rgba(240,180,41,0.4)" stroke="rgba(240,180,41,0.7)" stroke-width="1.2"/>
+            <circle cx="125" cy="45" r="32" fill="rgba(76,196,164,0.4)" stroke="rgba(76,196,164,0.7)" stroke-width="1.2"/>
+          </svg>
+          <div class="diagram-label">FULL OUTER</div>
+          <div class="diagram-desc">everything from both</div>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 200 90">
+            <circle cx="65" cy="45" r="28" fill="rgba(240,180,41,0.25)" stroke="rgba(240,180,41,0.6)" stroke-width="1.2"/>
+            <circle cx="135" cy="45" r="28" fill="rgba(76,196,164,0.25)" stroke="rgba(76,196,164,0.6)" stroke-width="1.2"/>
+            <text x="100" y="50" font-size="9" fill="#7a857f" text-anchor="middle" font-family="monospace">A×B</text>
+          </svg>
+          <div class="diagram-label">CROSS JOIN</div>
+          <div class="diagram-desc">cartesian product</div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">All join types</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- INNER: only matching rows
+SELECT e.name, d.name AS dept
+FROM employees e
+INNER JOIN departments d ON e.dept_id = d.id;
+
+-- LEFT: every employee, dept name if it exists (else NULL)
+SELECT e.name, d.name AS dept
+FROM employees e
+LEFT JOIN departments d ON e.dept_id = d.id;
+
+-- RIGHT: every department, employee if exists
+SELECT e.name, d.name AS dept
+FROM employees e
+RIGHT JOIN departments d ON e.dept_id = d.id;
+
+-- FULL OUTER: everything from both sides
+SELECT e.name, d.name AS dept
+FROM employees e
+FULL OUTER JOIN departments d ON e.dept_id = d.id;
+
+-- CROSS: every employee paired with every department
+SELECT e.name, d.name AS dept
+FROM employees e
+CROSS JOIN departments d;
+
+-- SELF JOIN: employee and their manager from same table
+SELECT e.name AS employee, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.id;</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label">Interview Tip</div>
+        <div class="callout-content">
+          <p>"Find customers who never placed an order" → use <code>LEFT JOIN ... WHERE right.id IS NULL</code> or <code>NOT EXISTS</code>. Both work; <code>NOT EXISTS</code> is often faster and handles NULLs safely.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Multi-table join</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Orders → customers → employees (sales rep)
+SELECT o.id, c.name AS customer, e.name AS sales_rep, o.amount
+FROM orders o
+JOIN customers c   ON o.customer_id = c.id
+JOIN employees e   ON o.sales_rep_id = e.id
+WHERE o.amount > 1000
+ORDER BY o.amount DESC;</code></pre>
+      </div>
+    </section>
+
+    <section class="topic" id="aggregation">
+      <div class="topic-head">
+        <span class="topic-num">03 / AGGREGATION</span>
+        <h2 class="topic-title">GROUP BY & HAVING</h2>
+        <p class="topic-sub">Aggregation collapses many rows into summary rows. The pattern is rigid: SELECT columns must be either grouped or aggregated.</p>
+      </div>
+
+      <div class="callout analogy">
+        <div class="callout-label">Analogy</div>
+        <div class="callout-content">
+          <p>Sorting a jar of M&Ms by color and counting each pile. <code>GROUP BY color</code> creates the piles. Aggregate functions like <code>COUNT(*)</code> count each pile. <code>HAVING</code> filters the piles (e.g., only piles with more than 5).</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Function</th><th>Returns</th><th>NULLs?</th></tr></thead>
+          <tbody>
+            <tr><td><code>COUNT(*)</code></td><td>All rows including NULLs</td><td>Counts NULLs</td></tr>
+            <tr><td><code>COUNT(col)</code></td><td>Non-NULL values in col</td><td>Skips NULLs</td></tr>
+            <tr><td><code>COUNT(DISTINCT col)</code></td><td>Unique non-NULL values</td><td>Skips NULLs</td></tr>
+            <tr><td><code>SUM(col)</code></td><td>Sum of numeric values</td><td>Skips NULLs</td></tr>
+            <tr><td><code>AVG(col)</code></td><td>Mean of non-NULL values</td><td>Skips NULLs</td></tr>
+            <tr><td><code>MIN(col)</code> / <code>MAX(col)</code></td><td>Smallest / largest value</td><td>Skips NULLs</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Syntax</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">SELECT dept, COUNT(*) AS headcount, AVG(salary) AS avg_salary
+FROM employees
+WHERE active = true              -- filter rows BEFORE grouping
+GROUP BY dept
+HAVING COUNT(*) > 5              -- filter groups AFTER grouping
+ORDER BY avg_salary DESC;</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-label">Common Mistake</div>
+        <div class="callout-content">
+          <p>Selecting a non-grouped, non-aggregated column:</p>
+          <p><code>SELECT dept, name, COUNT(*) FROM employees GROUP BY dept</code> — invalid in strict SQL. <code>name</code> isn't grouped or aggregated. Either add it to GROUP BY or wrap it in an aggregate.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Multi-column grouping + HAVING</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Average salary by department AND job title, only groups with 3+ people
+SELECT dept, title, AVG(salary) AS avg_sal, COUNT(*) AS n
+FROM employees
+GROUP BY dept, title
+HAVING COUNT(*) >= 3
+ORDER BY dept, avg_sal DESC;
+
+-- Find duplicate emails
+SELECT email, COUNT(*) AS occurrences
+FROM users
+GROUP BY email
+HAVING COUNT(*) > 1;</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label">Tip</div>
+        <div class="callout-content">
+          <p><code>WHERE</code> filters rows before aggregation; <code>HAVING</code> filters groups after. Use <code>HAVING</code> with aggregate functions, <code>WHERE</code> with plain columns.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="subqueries">
+      <div class="topic-head">
+        <span class="topic-num">04 / SUBQUERIES</span>
+        <h2 class="topic-title">Queries Inside Queries</h2>
+        <p class="topic-sub">Subqueries let you build intermediate results inline. They appear in WHERE, FROM, and SELECT clauses — each with different rules.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Where</th><th>Returns</th><th>Use case</th></tr></thead>
+          <tbody>
+            <tr><td>Scalar</td><td>SELECT / WHERE</td><td>1 row, 1 col</td><td>Compare to a single value</td></tr>
+            <tr><td>Multi-row</td><td>WHERE with IN / ANY / ALL</td><td>Many rows, 1 col</td><td>Match against a list</td></tr>
+            <tr><td>Correlated</td><td>WHERE / SELECT</td><td>Re-runs per row</td><td>Per-row lookup</td></tr>
+            <tr><td>Derived table</td><td>FROM</td><td>A result set</td><td>Pre-aggregate, then filter</td></tr>
+            <tr><td>EXISTS</td><td>WHERE</td><td>True/False</td><td>Existence check (NULL-safe)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">All subquery patterns</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- 1. SCALAR subquery: employees earning more than company average
+SELECT name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+
+-- 2. IN subquery: employees in departments with budget over 1M
+SELECT name
+FROM employees
+WHERE dept_id IN (
+  SELECT id FROM departments WHERE budget > 1000000
+);
+
+-- 3. CORRELATED subquery: employees earning more than their dept average
+SELECT e1.name, e1.salary, e1.dept
+FROM employees e1
+WHERE e1.salary > (
+  SELECT AVG(e2.salary)
+  FROM employees e2
+  WHERE e2.dept = e1.dept        -- correlated to outer row
+);
+
+-- 4. DERIVED TABLE: pre-aggregate, then filter
+SELECT dept, headcount
+FROM (
+  SELECT dept, COUNT(*) AS headcount
+  FROM employees
+  GROUP BY dept
+) t
+WHERE headcount > 10;
+
+-- 5. EXISTS: customers who placed at least one order
+SELECT c.name
+FROM customers c
+WHERE EXISTS (
+  SELECT 1 FROM orders o
+  WHERE o.customer_id = c.id
+);</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-label">NULL Trap</div>
+        <div class="callout-content">
+          <p><code>NOT IN (subquery)</code> breaks if the subquery returns any NULL. The whole result becomes empty because <code>x NOT IN (NULL)</code> is unknown, not true. Use <code>NOT EXISTS</code> instead — it's NULL-safe and usually faster.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="window">
+      <div class="topic-head">
+        <span class="topic-num">05 / WINDOW FUNCTIONS</span>
+        <h2 class="topic-title">The Interview Differentiator</h2>
+        <p class="topic-sub">Window functions perform calculations across rows related to the current row — without collapsing them like GROUP BY does. This is the #1 topic that separates junior from senior candidates.</p>
+      </div>
+
+      <div class="callout analogy">
+        <div class="callout-label">Analogy</div>
+        <div class="callout-content">
+          <p>Imagine a spreadsheet of students sorted by score. A window function is like adding a column that shows each student's rank — every original row stays, but you get an extra computed column based on neighboring rows. <code>PARTITION BY</code> is like restarting the rank counter for each class section.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Anatomy</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">FUNCTION_NAME() OVER (
+  PARTITION BY column1, column2     -- optional: restart per group
+  ORDER BY column3                  -- optional: defines row order
+  ROWS BETWEEN ... AND ...          -- optional: frame definition
+) AS alias</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Ranking functions — know the differences</h3>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>score</th><th>ROW_NUMBER()</th><th>RANK()</th><th>DENSE_RANK()</th></tr></thead>
+          <tbody>
+            <tr><td>100</td><td>1</td><td>1</td><td>1</td></tr>
+            <tr><td>100</td><td>2</td><td>1</td><td>1</td></tr>
+            <tr><td>90</td><td>3</td><td>3</td><td>2</td></tr>
+            <tr><td>80</td><td>4</td><td>4</td><td>3</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul>
+        <li><code>ROW_NUMBER()</code> — always unique, no ties.</li>
+        <li><code>RANK()</code> — ties get same rank, then skips (1,1,3,4).</li>
+        <li><code>DENSE_RANK()</code> — ties get same rank, no skips (1,1,2,3). Best for "Nth highest" problems.</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">All window functions</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Ranking: top 3 earners per department
+SELECT dept, name, salary,
+       DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk
+FROM employees;
+
+-- ROW_NUMBER: assign sequential row ids per group
+SELECT name, dept,
+       ROW_NUMBER() OVER (PARTITION BY dept ORDER BY hire_date) AS seq
+FROM employees;
+
+-- LAG / LEAD: compare row to previous/next (e.g., MoM growth)
+SELECT month, revenue,
+       LAG(revenue) OVER (ORDER BY month) AS prev_month,
+       revenue - LAG(revenue) OVER (ORDER BY month) AS growth
+FROM monthly_sales;
+
+-- Running total (cumulative sum)
+SELECT order_date, amount,
+       SUM(amount) OVER (ORDER BY order_date) AS running_total
+FROM orders;
+
+-- Average within department (no ORDER BY = whole partition as frame)
+SELECT name, dept, salary,
+       AVG(salary) OVER (PARTITION BY dept) AS dept_avg
+FROM employees;
+
+-- NTILE: split into 4 quartiles by salary
+SELECT name, salary,
+       NTILE(4) OVER (ORDER BY salary DESC) AS quartile
+FROM employees;
+
+-- FIRST_VALUE / LAST_VALUE in a partition
+SELECT name, dept, salary,
+       FIRST_VALUE(name) OVER (PARTITION BY dept ORDER BY salary DESC) AS top_earner
+FROM employees;</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Frame clause — defining the "window"</h3>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Frame syntax</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- ROWS: physical row count. RANGE: logical value range.
+SUM(amount) OVER (
+  ORDER BY date
+  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW       -- 3-row rolling sum
+)
+
+SUM(amount) OVER (
+  ORDER BY date
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW  -- running total
+)
+
+SUM(amount) OVER (
+  ORDER BY date
+  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING  -- grand total per row
+)</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label">Why this matters</div>
+        <div class="callout-content">
+          <p>Window functions let you solve in one query what would otherwise need self-joins or multiple subqueries: running totals, ranks, top-N-per-group, gaps-islands, and time-series comparisons. They're almost always faster too.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="cte">
+      <div class="topic-head">
+        <span class="topic-num">06 / CTE</span>
+        <h2 class="topic-title">Common Table Expressions</h2>
+        <p class="topic-sub">CTEs are named temporary result sets that make complex queries readable. They're also recursive — enabling tree/hierarchy traversals that are otherwise painful.</p>
+      </div>
+
+      <div class="callout analogy">
+        <div class="callout-label">Analogy</div>
+        <div class="callout-content">
+          <p>A CTE is like defining a helper variable in programming: <code>WITH active_users AS (...) SELECT * FROM active_users</code>. You build it once, name it, then reference it. Cleaner than nesting subqueries 4 levels deep.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Basic + multiple CTEs</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">WITH dept_stats AS (
+  SELECT dept, AVG(salary) AS avg_sal, COUNT(*) AS headcount
+  FROM employees
+  GROUP BY dept
+),
+high_earners AS (
+  SELECT name, dept, salary
+  FROM employees
+  WHERE salary > 100000
+)
+SELECT h.name, h.dept, h.salary, d.avg_sal, d.headcount
+FROM high_earners h
+JOIN dept_stats d ON h.dept = d.dept
+ORDER BY h.salary DESC;</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Recursive CTE — trees & hierarchies</h3>
+      </div>
+
+      <div class="callout analogy">
+        <div class="callout-label">Analogy</div>
+        <div class="callout-content">
+          <p>Think of a recursive CTE like following an org chart downward. The <strong>anchor</strong> picks the CEO. The <strong>recursive member</strong> says: "for each person found, find their direct reports." Keep going until no new people are found.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Employee hierarchy</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">WITH RECURSIVE org_tree AS (
+  -- Anchor: top-level (no manager)
+  SELECT id, name, manager_id, 1 AS depth,
+         CAST(name AS VARCHAR(1000)) AS path
+  FROM employees
+  WHERE manager_id IS NULL
+
+  UNION ALL
+
+  -- Recursive: find direct reports of previously found employees
+  SELECT e.id, e.name, e.manager_id, o.depth + 1,
+         CAST(o.path || ' > ' || e.name AS VARCHAR(1000))
+  FROM employees e
+  JOIN org_tree o ON e.manager_id = o.id
+)
+SELECT id, name, depth, path
+FROM org_tree
+ORDER BY path;
+
+-- Generate a sequence of numbers 1..10
+WITH RECURSIVE nums(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM nums WHERE n < 10
+)
+SELECT n FROM nums;</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-label">Watch out</div>
+        <div class="callout-content">
+          <p>Recursive CTEs without a proper termination condition can infinite-loop. Always include a WHERE clause in the recursive member that eventually becomes false.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="set-ops">
+      <div class="topic-head">
+        <span class="topic-num">07 / SET OPERATIONS</span>
+        <h2 class="topic-title">UNION, INTERSECT, EXCEPT</h2>
+        <p class="topic-sub">Set operations combine rows from two result sets vertically. Both queries must return the same number of columns with compatible types.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Operator</th><th>Behavior</th><th>Duplicates?</th></tr></thead>
+          <tbody>
+            <tr><td><code>UNION</code></td><td>All rows from both</td><td>Removed</td></tr>
+            <tr><td><code>UNION ALL</code></td><td>All rows from both</td><td>Kept (faster)</td></tr>
+            <tr><td><code>INTERSECT</code></td><td>Rows in both</td><td>Removed</td></tr>
+            <tr><td><code>EXCEPT</code> / <code>MINUS</code></td><td>Rows in first only</td><td>Removed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Examples</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- UNION ALL: combine customer + employee names (keep duplicates)
+SELECT name, email FROM customers
+UNION ALL
+SELECT name, email FROM employees;
+
+-- INTERSECT: people who are both customers AND employees
+SELECT name FROM customers
+INTERSECT
+SELECT name FROM employees;
+
+-- EXCEPT: customers who are NOT employees
+SELECT name FROM customers
+EXCEPT
+SELECT name FROM employees;</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label">Performance</div>
+        <div class="callout-content">
+          <p>Use <code>UNION ALL</code> instead of <code>UNION</code> unless you specifically need duplicates removed. <code>UNION</code> triggers a sort/distinct that can be expensive on large datasets.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="case">
+      <div class="topic-head">
+        <span class="topic-num">08 / CASE</span>
+        <h2 class="topic-title">Conditional Logic & NULL Helpers</h2>
+        <p class="topic-sub">CASE is SQL's if/then/else. Combined with aggregates, it powers pivots and conditional counts. Plus the trio of NULL helpers you must know.</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">CASE syntax</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Searched CASE (more flexible, use this)
+SELECT name, salary,
+  CASE
+    WHEN salary >= 150000 THEN 'Staff+'
+    WHEN salary >= 100000 THEN 'Senior'
+    WHEN salary >= 70000  THEN 'Mid'
+    ELSE 'Junior'
+  END AS level
+FROM employees;
+
+-- Simple CASE (compares single value for equality)
+SELECT name,
+  CASE dept
+    WHEN 'Eng' THEN 'Engineering'
+    WHEN 'Sales' THEN 'Sales'
+    ELSE 'Other'
+  END AS dept_name
+FROM employees;</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">CASE inside aggregates — the pivot trick</h3>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Conditional aggregation</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Count employees by dept in one row per department
+SELECT
+  COUNT(CASE WHEN dept = 'Eng'   THEN 1 END) AS eng_count,
+  COUNT(CASE WHEN dept = 'Sales' THEN 1 END) AS sales_count,
+  COUNT(CASE WHEN dept = 'Ops'   THEN 1 END) AS ops_count
+FROM employees;
+
+-- Pivot: revenue per quarter, one row per dept
+SELECT dept,
+  SUM(CASE WHEN quarter = 1 THEN revenue ELSE 0 END) AS q1,
+  SUM(CASE WHEN quarter = 2 THEN revenue ELSE 0 END) AS q2,
+  SUM(CASE WHEN quarter = 3 THEN revenue ELSE 0 END) AS q3,
+  SUM(CASE WHEN quarter = 4 THEN revenue ELSE 0 END) AS q4
+FROM quarterly_revenue
+GROUP BY dept;</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">NULL helpers</h3>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Function</th><th>What it does</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>COALESCE(a, b, c)</code></td><td>First non-NULL value</td><td><code>COALESCE(phone, email, 'no contact')</code></td></tr>
+            <tr><td><code>NULLIF(a, b)</code></td><td>NULL if a = b, else a</td><td><code>NULLIF(denominator, 0)</code> — avoids divide-by-zero</td></tr>
+            <tr><td><code>GREATEST(a, b, c)</code></td><td>Largest of values</td><td><code>GREATEST(q1, q2, q3, q4)</code></td></tr>
+            <tr><td><code>LEAST(a, b, c)</code></td><td>Smallest of values</td><td><code>LEAST(q1, q2, q3, q4)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Real-world combo</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Safe percentage: divide but never by zero
+SELECT
+  dept,
+  SUM(CASE WHEN active THEN 1 ELSE 0 END) AS active_count,
+  COUNT(*) AS total,
+  ROUND(
+    SUM(CASE WHEN active THEN 1 ELSE 0 END) * 100.0 /
+    NULLIF(COUNT(*), 0),
+    2
+  ) AS pct_active
+FROM employees
+GROUP BY dept;</code></pre>
+      </div>
+    </section>
+
+    <section class="topic" id="strings">
+      <div class="topic-head">
+        <span class="topic-num">09 / STRINGS</span>
+        <h2 class="topic-title">String Functions</h2>
+        <p class="topic-sub">Pattern matching, concatenation, slicing. Note: function names vary by database — know both flavors.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Operation</th><th>PostgreSQL / Standard</th><th>MySQL</th></tr></thead>
+          <tbody>
+            <tr><td>Concatenate</td><td><code>CONCAT(a, b)</code> or <code>a || b</code></td><td><code>CONCAT(a, b)</code></td></tr>
+            <tr><td>Length</td><td><code>LENGTH(s)</code></td><td><code>CHAR_LENGTH(s)</code></td></tr>
+            <tr><td>Substring</td><td><code>SUBSTRING(s FROM 1 FOR 3)</code></td><td><code>SUBSTRING(s, 1, 3)</code> or <code>SUBSTR()</code></td></tr>
+            <tr><td>Uppercase / Lowercase</td><td><code>UPPER(s)</code> / <code>LOWER(s)</code></td><td>same</td></tr>
+            <tr><td>Trim</td><td><code>TRIM(s)</code> / <code>BTRIM</code> / <code>LTRIM</code> / <code>RTRIM</code></td><td>same</td></tr>
+            <tr><td>Replace</td><td><code>REPLACE(s, 'a', 'b')</code></td><td>same</td></tr>
+            <tr><td>Position</td><td><code>POSITION('x' IN s)</code></td><td><code>INSTR(s, 'x')</code></td></tr>
+            <tr><td>Pad</td><td><code>LPAD(s, n, '0')</code></td><td>same</td></tr>
+            <tr><td>Split</td><td><code>SPLIT_PART(s, ',', 2)</code></td><td><code>SUBSTRING_INDEX(s, ',', 2)</code></td></tr>
+            <tr><td>Group concat</td><td><code>STRING_AGG(s, ',' ORDER BY s)</code></td><td><code>GROUP_CONCAT(s SEPARATOR ',')</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Common patterns</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Clean and normalize names
+SELECT
+  TRIM(name) AS clean_name,
+  UPPER(TRIM(name)) AS upper_name,
+  INITCAP(name) AS proper_name             -- PostgreSQL
+FROM users;
+
+-- Extract domain from email
+SELECT email,
+  SUBSTRING(email FROM POSITION('@' IN email) + 1) AS domain
+FROM users;
+
+-- Mask all but last 4 digits of SSN
+SELECT
+  CONCAT(REPEAT('•', LENGTH(ssn) - 4), RIGHT(ssn, 4)) AS masked
+FROM users;
+
+-- Combine rows into a comma-separated list
+SELECT dept,
+  STRING_AGG(name, ', ' ORDER BY name) AS all_names
+FROM employees
+GROUP BY dept;
+
+-- Pattern matching with regex (PostgreSQL)
+SELECT name FROM users
+WHERE name ~ '^[A-Z][a-z]+$';              -- starts capital, rest lowercase</code></pre>
+      </div>
+    </section>
+
+    <section class="topic" id="dates">
+      <div class="topic-head">
+        <span class="topic-num">10 / DATES</span>
+        <h2 class="topic-title">Date & Time Functions</h2>
+        <p class="topic-sub">Date math shows up constantly in analytics interviews — retention, growth, time-between-events. Syntax varies a lot by dialect; learn the patterns.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Operation</th><th>PostgreSQL</th><th>MySQL</th></tr></thead>
+          <tbody>
+            <tr><td>Now / today</td><td><code>NOW()</code> / <code>CURRENT_DATE</code></td><td><code>NOW()</code> / <code>CURDATE()</code></td></tr>
+            <tr><td>Add interval</td><td><code>date + INTERVAL '7 days'</code></td><td><code>DATE_ADD(date, INTERVAL 7 DAY)</code></td></tr>
+            <tr><td>Difference (days)</td><td><code>date2 - date1</code></td><td><code>DATEDIFF(date2, date1)</code></td></tr>
+            <tr><td>Extract part</td><td><code>EXTRACT(YEAR FROM date)</code></td><td><code>YEAR(date)</code></td></tr>
+            <tr><td>Truncate to month</td><td><code>DATE_TRUNC('month', date)</code></td><td><code>DATE_FORMAT(date, '%Y-%m-01')</code></td></tr>
+            <tr><td>Format</td><td><code>TO_CHAR(date, 'YYYY-MM-DD')</code></td><td><code>DATE_FORMAT(date, '%Y-%m-%d')</code></td></tr>
+            <tr><td>Cast string to date</td><td><code>date '2024-01-15'</code> or <code>CAST(s AS date)</code></td><td><code>STR_TO_DATE(s, '%Y-%m-%d')</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">Common patterns</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Users who signed up in the last 30 days
+SELECT name, created_at
+FROM users
+WHERE created_at >= CURRENT_DATE - INTERVAL '30 days';
+
+-- Orders grouped by month
+SELECT
+  DATE_TRUNC('month', order_date) AS month,
+  COUNT(*) AS order_count,
+  SUM(amount) AS revenue
+FROM orders
+GROUP BY DATE_TRUNC('month', order_date)
+ORDER BY month;
+
+-- Average days between a user's first and second order
+WITH order_seq AS (
+  SELECT user_id, order_date,
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY order_date) AS n
+  FROM orders
+)
+SELECT AVG(second_date - first_date) AS avg_days_between
+FROM (
+  SELECT user_id,
+    MAX(CASE WHEN n = 1 THEN order_date END) AS first_date,
+    MAX(CASE WHEN n = 2 THEN order_date END) AS second_date
+  FROM order_seq
+  WHERE n &lt;= 2
+  GROUP BY user_id
+) t
+WHERE second_date IS NOT NULL;
+
+-- Age from birthdate
+SELECT name,
+  EXTRACT(YEAR FROM AGE(CURRENT_DATE, birthdate))::int AS age
+FROM users;</code></pre>
+      </div>
+    </section>
+
+    <section class="topic" id="dml">
+      <div class="topic-head">
+        <span class="topic-num">11 / DML</span>
+        <h2 class="topic-title">INSERT, UPDATE, DELETE, UPSERT</h2>
+        <p class="topic-sub">Data Manipulation Language — modifying rows. Less common in read-heavy interviews, but you'll need UPSERT and UPDATE-FROM-JOIN patterns.</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">INSERT</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Single row
+INSERT INTO employees (name, dept, salary)
+VALUES ('Alice', 'Eng', 120000);
+
+-- Multiple rows
+INSERT INTO employees (name, dept, salary)
+VALUES
+  ('Bob',   'Eng',   95000),
+  ('Carol', 'Sales', 85000),
+  ('Dave',  'Eng',  110000);
+
+-- INSERT from SELECT (load from another table)
+INSERT INTO archive_employees (id, name, retired_on)
+SELECT id, name, CURRENT_DATE
+FROM employees
+WHERE active = false;</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">UPDATE & DELETE</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- UPDATE with condition
+UPDATE employees
+SET salary = salary * 1.1, updated_at = NOW()
+WHERE dept = 'Eng' AND performance = 'exceeds';
+
+-- UPDATE from join (PostgreSQL syntax)
+UPDATE employees e
+SET salary = e.salary * 1.05
+FROM departments d
+WHERE e.dept_id = d.id AND d.budget > 1000000;
+
+-- DELETE with condition
+DELETE FROM employees
+WHERE active = false AND last_login &lt; CURRENT_DATE - INTERVAL '1 year';
+
+-- DELETE using subquery
+DELETE FROM orders
+WHERE customer_id IN (
+  SELECT id FROM customers WHERE deleted = true
+);
+
+-- DELETE duplicates keeping the lowest id
+DELETE FROM users
+WHERE id NOT IN (
+  SELECT MIN(id) FROM users GROUP BY email
+);</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">UPSERT (INSERT ... ON CONFLICT)</h3>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">PostgreSQL UPSERT</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Insert, or update on conflict
+INSERT INTO employees (id, name, salary)
+VALUES (1, 'Alice', 120000)
+ON CONFLICT (id)
+DO UPDATE SET salary = EXCLUDED.salary, name = EXCLUDED.name;
+
+-- Insert, or do nothing
+INSERT INTO subscriptions (user_id, plan)
+VALUES (42, 'pro')
+ON CONFLICT (user_id) DO NOTHING;</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">MySQL UPSERT</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">INSERT INTO employees (id, name, salary)
+VALUES (1, 'Alice', 120000)
+ON DUPLICATE KEY UPDATE salary = VALUES(salary);</code></pre>
+      </div>
+    </section>
+
+    <section class="topic" id="ddl">
+      <div class="topic-head">
+        <span class="topic-num">12 / DDL</span>
+        <h2 class="topic-title">Schema, Constraints, Indexes</h2>
+        <p class="topic-sub">Data Definition Language — creating and modifying tables. Interviews rarely test DML/DDL directly, but you should know constraints, indexes, and views cold.</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">CREATE TABLE with all constraint types</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">CREATE TABLE employees (
+  id           SERIAL PRIMARY KEY,                    -- auto-incrementing PK
+  email        VARCHAR(255) NOT NULL UNIQUE,          -- no duplicates
+  name         VARCHAR(100) NOT NULL,
+  dept_id      INTEGER REFERENCES departments(id),    -- foreign key
+  salary       NUMERIC(10, 2) CHECK (salary >= 0),    -- constraint
+  hire_date    DATE DEFAULT CURRENT_DATE,             -- default value
+  manager_id   INTEGER REFERENCES employees(id),      -- self-reference
+  created_at   TIMESTAMP DEFAULT NOW(),
+
+  -- Table-level constraints
+  CONSTRAINT valid_salary CHECK (salary &lt; 1000000),
+  CONSTRAINT unique_dept_role UNIQUE (dept_id, email)
+);</code></pre>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Common constraints</h3>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Constraint</th><th>What it enforces</th></tr></thead>
+          <tbody>
+            <tr><td><code>PRIMARY KEY</code></td><td>Unique + NOT NULL. One per table. Auto-indexed.</td></tr>
+            <tr><td><code>FOREIGN KEY</code></td><td>Value must exist in referenced table's column. Prevents orphans.</td></tr>
+            <tr><td><code>UNIQUE</code></td><td>No duplicate values. NULL allowed (usually multiple).</td></tr>
+            <tr><td><code>NOT NULL</code></td><td>Cannot be NULL.</td></tr>
+            <tr><td><code>CHECK</code></td><td>Custom boolean condition must be true.</td></tr>
+            <tr><td><code>DEFAULT</code></td><td>Value used when none provided on INSERT.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">ALTER, DROP, TRUNCATE</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- Add / drop column
+ALTER TABLE employees ADD COLUMN phone VARCHAR(20);
+ALTER TABLE employees DROP COLUMN phone;
+
+-- Add constraint
+ALTER TABLE employees
+  ADD CONSTRAINT positive_salary CHECK (salary >= 0);
+
+-- Create index (for query speed)
+CREATE INDEX idx_employees_dept     ON employees(dept_id);
+CREATE UNIQUE INDEX idx_email       ON employees(email);
+CREATE INDEX idx_orders_date_amount ON orders(order_date, amount);  -- composite
+
+-- Drop & truncate (TRUNCATE is faster, can't be rolled back in some DBs)
+DROP TABLE employees;          -- removes structure + data
+TRUNCATE TABLE employees;      -- removes data, keeps structure
+
+-- View: a saved query
+CREATE VIEW active_employees AS
+SELECT id, name, dept
+FROM employees
+WHERE active = true;</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label">Indexing Essentials</div>
+        <div class="callout-content">
+          <p>Indexes speed up <code>WHERE</code>, <code>JOIN ON</code>, and <code>ORDER BY</code> — but slow down writes. Index foreign keys and columns you filter/sort on. Composite indexes work left-to-right: an index on <code>(a, b, c)</code> helps <code>WHERE a=1</code> and <code>WHERE a=1 AND b=2</code>, but not <code>WHERE b=2</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="patterns">
+      <div class="topic-head">
+        <span class="topic-num">13 / PATTERNS</span>
+        <h2 class="topic-title">The 10 Classic Interview Patterns</h2>
+        <p class="topic-sub">These show up repeatedly across LeetCode, HackerRank, and live interviews. Memorize the patterns, not the answers — most variations are remixes of these.</p>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">01</span>
+          <span class="pattern-title">Nth Highest Salary</span>
+        </div>
+        <p class="pattern-desc">Three approaches, from simplest to most portable. <code>DENSE_RANK</code> is preferred because it handles ties correctly.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Three solutions</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- Approach 1: LIMIT + OFFSET (MySQL/PostgreSQL, simplest)
+SELECT DISTINCT salary
+FROM employees
+ORDER BY salary DESC
+LIMIT 1 OFFSET (N - 1);            -- N=2 for 2nd highest
+
+-- Approach 2: Subquery (works everywhere, but only for 2nd highest easily)
+SELECT MAX(salary)
+FROM employees
+WHERE salary &lt; (SELECT MAX(salary) FROM employees);
+
+-- Approach 3: DENSE_RANK (modern, handles ties, scales to any N)
+SELECT salary FROM (
+  SELECT salary,
+    DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+  FROM employees
+) t
+WHERE rnk = N;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">02</span>
+          <span class="pattern-title">Find Duplicate Records</span>
+        </div>
+        <p class="pattern-desc">GROUP BY + HAVING is the canonical answer.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- Duplicate emails
+SELECT email, COUNT(*) AS cnt
+FROM users
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Duplicate (name, dept) pairs
+SELECT name, dept, COUNT(*) AS cnt
+FROM employees
+GROUP BY name, dept
+HAVING COUNT(*) > 1;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">03</span>
+          <span class="pattern-title">Delete Duplicates (Keep One)</span>
+        </div>
+        <p class="pattern-desc">Use ROW_NUMBER to mark all-but-one row per group, then delete the marked rows.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- Using CTE + ROW_NUMBER
+WITH dups AS (
+  SELECT id,
+    ROW_NUMBER() OVER (PARTITION BY email ORDER BY id) AS rn
+  FROM users
+)
+DELETE FROM users
+WHERE id IN (SELECT id FROM dups WHERE rn > 1);
+
+-- Self-join approach (MySQL, older versions)
+DELETE u1
+FROM users u1
+JOIN users u2
+  ON u1.email = u2.email AND u1.id > u2.id;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">04</span>
+          <span class="pattern-title">Consecutive Numbers</span>
+        </div>
+        <p class="pattern-desc">The classic "find numbers appearing N times in a row." Uses ROW_NUMBER difference trick.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- Find numbers appearing 3+ times consecutively
+SELECT DISTINCT num
+FROM (
+  SELECT num,
+    ROW_NUMBER() OVER (ORDER BY id) -
+    ROW_NUMBER() OVER (PARTITION BY num ORDER BY id) AS diff
+  FROM logs
+) t
+GROUP BY num, diff
+HAVING COUNT(*) >= 3;
+
+-- Alternative: self-join (more intuitive, less scalable)
+SELECT DISTINCT a.num
+FROM logs a
+JOIN logs b ON a.id = b.id - 1 AND a.num = b.num
+JOIN logs c ON b.id = c.id - 1 AND b.num = c.num;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">05</span>
+          <span class="pattern-title">Top N Per Group</span>
+        </div>
+        <p class="pattern-desc">The "Department Top 3" problem. Use DENSE_RANK if ties should be included, ROW_NUMBER if you need exactly N rows.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">SELECT dept, name, salary
+FROM (
+  SELECT name, dept, salary,
+    DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk
+  FROM employees
+) t
+WHERE rnk &lt;= 3
+ORDER BY dept, salary DESC;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">06</span>
+          <span class="pattern-title">Running Total / Cumulative Sum</span>
+        </div>
+        <p class="pattern-desc">Pure window function application.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- Cumulative revenue over time
+SELECT
+  order_date,
+  amount,
+  SUM(amount) OVER (ORDER BY order_date
+                    ROWS UNBOUNDED PRECEDING) AS running_total
+FROM orders
+ORDER BY order_date;
+
+-- Per-customer running total
+SELECT
+  customer_id, order_date, amount,
+  SUM(amount) OVER (PARTITION BY customer_id
+                    ORDER BY order_date
+                    ROWS UNBOUNDED PRECEDING) AS customer_total
+FROM orders;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">07</span>
+          <span class="pattern-title">Year-over-Year / Month-over-Month Growth</span>
+        </div>
+        <p class="pattern-desc">LAG gives you the previous period's value in the same row, making growth calculations trivial.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">SELECT
+  year,
+  revenue,
+  LAG(revenue) OVER (ORDER BY year) AS prev_year,
+  ROUND(
+    (revenue - LAG(revenue) OVER (ORDER BY year)) * 100.0 /
+    NULLIF(LAG(revenue) OVER (ORDER BY year), 0),
+    2
+  ) AS yoy_growth_pct
+FROM yearly_revenue
+ORDER BY year;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">08</span>
+          <span class="pattern-title">Tree / Hierarchy Traversal</span>
+        </div>
+        <p class="pattern-desc">Recursive CTE for org charts, category trees, conversation threads.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">WITH RECURSIVE org_chain AS (
+  SELECT id, name, manager_id, 1 AS level,
+         CAST(name AS VARCHAR(1000)) AS path
+  FROM employees
+  WHERE manager_id IS NULL            -- start at the top
+
+  UNION ALL
+
+  SELECT e.id, e.name, e.manager_id, o.level + 1,
+         CAST(o.path || ' > ' || e.name AS VARCHAR(1000))
+  FROM employees e
+  JOIN org_chain o ON e.manager_id = o.id
+)
+SELECT level, name, path FROM org_chain
+ORDER BY path;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">09</span>
+          <span class="pattern-title">Pivot Rows to Columns</span>
+        </div>
+        <p class="pattern-desc">No PIVOT operator in most databases — use CASE + aggregate. The universal pattern.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Solution</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- Revenue per department, one column per quarter
+SELECT
+  dept,
+  SUM(CASE WHEN quarter = 1 THEN revenue ELSE 0 END) AS q1,
+  SUM(CASE WHEN quarter = 2 THEN revenue ELSE 0 END) AS q2,
+  SUM(CASE WHEN quarter = 3 THEN revenue ELSE 0 END) AS q3,
+  SUM(CASE WHEN quarter = 4 THEN revenue ELSE 0 END) AS q4,
+  SUM(revenue) AS total
+FROM quarterly_revenue
+GROUP BY dept
+ORDER BY total DESC;</code></pre>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="pattern-head">
+          <span class="pattern-num">10</span>
+          <span class="pattern-title">Find Records With No Match</span>
+        </div>
+        <p class="pattern-desc">"Customers who never ordered." Use LEFT JOIN + IS NULL or NOT EXISTS.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="code-label">Three solutions</span><button class="copy-btn">Copy</button></div>
+          <pre><code class="sql">-- LEFT JOIN approach (most intuitive)
+SELECT c.name
+FROM customers c
+LEFT JOIN orders o ON c.id = o.customer_id
+WHERE o.id IS NULL;
+
+-- NOT EXISTS (NULL-safe, often fastest)
+SELECT c.name
+FROM customers c
+WHERE NOT EXISTS (
+  SELECT 1 FROM orders o WHERE o.customer_id = c.id
+);
+
+-- NOT IN (works, but breaks if orders.customer_id has NULLs)
+SELECT name FROM customers
+WHERE id NOT IN (SELECT customer_id FROM orders);</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="performance">
+      <div class="topic-head">
+        <span class="topic-num">14 / PERFORMANCE</span>
+        <h2 class="topic-title">Query Optimization Essentials</h2>
+        <p class="topic-sub">Senior interviews often include "how would you optimize this query?" Know these patterns cold.</p>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Read the execution plan</h3>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span class="code-label">EXPLAIN</span><button class="copy-btn">Copy</button></div>
+        <pre><code class="sql">-- View the query plan (PostgreSQL)
+EXPLAIN SELECT * FROM employees WHERE dept_id = 5;
+
+-- View plan + actually run it (shows real timing)
+EXPLAIN ANALYZE SELECT * FROM employees WHERE dept_id = 5;
+
+-- MySQL equivalent
+EXPLAIN SELECT * FROM employees WHERE dept_id = 5;</code></pre>
+      </div>
+
+      <p>Look for: <strong>Seq Scan</strong> (full table scan = bad on large tables), <strong>Index Scan</strong> (good), <strong>Bitmap Heap Scan</strong> (medium). Watch for nested loops with high row estimates.</p>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Sargable predicates (Search ARGument ABLE)</h3>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-label">Anti-patterns</div>
+        <div class="callout-content">
+          <p>These prevent index usage — the database must scan every row:</p>
+          <p><code>WHERE YEAR(date_col) = 2024</code> — function on column kills index. Use: <code>WHERE date_col &gt;= '2024-01-01' AND date_col &lt; '2025-01-01'</code></p>
+          <p><code>WHERE LOWER(email) = 'alice@x.com'</code> — use a case-insensitive collation or store lowercase.</p>
+          <p><code>WHERE col LIKE '%alice'</code> — leading wildcard can't use index. <code>LIKE 'alice%'</code> can.</p>
+          <p><code>WHERE col + 1 = 10</code> — rewrite as <code>col = 9</code>.</p>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">Quick wins</h3>
+      </div>
+
+      <ul>
+        <li><strong>Avoid <code>SELECT *</code></strong> — fetch only needed columns. Saves I/O, network, memory.</li>
+        <li><strong>Index foreign keys</strong> — most databases don't auto-index them; joins get slow.</li>
+        <li><strong>Index columns in WHERE, JOIN ON, ORDER BY</strong> — but remember indexes cost write speed.</li>
+        <li><strong>Use <code>UNION ALL</code> over <code>UNION</code></strong> unless you need deduplication.</li>
+        <li><strong>Use <code>EXISTS</code> over <code>IN</code></strong> for large subquery result sets — short-circuits on first match.</li>
+        <li><strong>Limit early</strong> — add <code>LIMIT</code> before complex joins if you only need a sample.</li>
+        <li><strong>Filter in WHERE, not HAVING</strong> — WHERE runs before aggregation, cheaper.</li>
+        <li><strong>Batch large deletes</strong> — <code>DELETE FROM logs WHERE date &lt; ... LIMIT 10000</code> in a loop, not one massive DELETE.</li>
+      </ul>
+
+      <div class="callout tip">
+        <div class="callout-label">Interview Framing</div>
+        <div class="callout-content">
+          <p>When asked "how would you optimize this query?" — walk through: (1) check the execution plan, (2) identify full table scans, (3) add indexes on filter/join columns, (4) rewrite non-sargable predicates, (5) consider denormalization or materialized views for read-heavy workloads.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="no-results" id="noResults">
+      <p>No matches found. Try a different search term.</p>
+    </div>
+  </main>
+</div>
+
+<button class="back-top" id="backTop" aria-label="Back to top">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-mark">SQL INTERVIEW PLAYBOOK · PARETO-OPTIMIZED</div>
+    <div>Practice &gt; memorization. Master the 20% that matters.</div>
+  </div>
+</footer>
+
+<script>
+// ============ SQL SYNTAX HIGHLIGHTER ============
+const SQL_KEYWORDS = [
+  'SELECT','DISTINCT','FROM','WHERE','GROUP BY','HAVING','ORDER BY','LIMIT','OFFSET','FETCH','NEXT','ROWS','ROW ONLY',
+  'AS','AND','OR','NOT','IN','EXISTS','BETWEEN','LIKE','ILIKE','IS','NULL','TRUE','FALSE','CASE','WHEN','THEN','ELSE','END',
+  'JOIN','INNER','LEFT','RIGHT','FULL','OUTER','CROSS','ON','USING','NATURAL','UNION','ALL','INTERSECT','EXCEPT','MINUS',
+  'INSERT','INTO','VALUES','UPDATE','SET','DELETE','MERGE','RETURNING',
+  'CREATE','TABLE','ALTER','ADD','DROP','COLUMN','TRUNCATE','VIEW','INDEX','UNIQUE','CONSTRAINT','CHECK','DEFAULT','PRIMARY KEY','FOREIGN KEY','REFERENCES',
+  'WITH','RECURSIVE','OVER','PARTITION BY','PRECEDING','FOLLOWING','UNBOUNDED','CURRENT ROW','RANGE','ASC','DESC','NULLS FIRST','NULLS LAST',
+  'CAST','DISTINCT ON','DO NOTHING','DO UPDATE','CONFLICT','DUPLICATE KEY','SEPARATOR','INTERVAL'
+];
+const SQL_FUNCTIONS = [
+  'COUNT','SUM','AVG','MIN','MAX','ROW_NUMBER','RANK','DENSE_RANK','LAG','LEAD','NTILE','FIRST_VALUE','LAST_VALUE','NTH_VALUE','CUME_DIST','PERCENT_RANK',
+  'CONCAT','SUBSTRING','SUBSTR','LENGTH','CHAR_LENGTH','UPPER','LOWER','TRIM','LTRIM','RTRIM','BTRIM','REPLACE','POSITION','INSTR','LEFT','RIGHT','REVERSE',
+  'LPAD','RPAD','SPLIT_PART','SUBSTRING_INDEX','STRING_AGG','GROUP_CONCAT','INITCAP','REPEAT',
+  'NOW','CURRENT_DATE','CURRENT_TIMESTAMP','CURDATE','EXTRACT','DATE_PART','DATE_TRUNC','DATE_ADD','DATE_SUB','DATEDIFF','TO_CHAR','DATE_FORMAT','STR_TO_DATE','AGE','YEAR','MONTH','DAY',
+  'COALESCE','NULLIF','GREATEST','LEAST','ABS','ROUND','CEIL','CEILING','FLOOR','POWER'
+];
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlightSQL(code) {
+  // Build keyword/function alternation patterns, sorted longest-first so
+  // e.g. 'PRIMARY KEY' wins over 'PRIMARY' / 'KEY' alone.
+  const kwPattern = SQL_KEYWORDS.slice().sort((a,b) => b.length - a.length)
+    .map(k => k.replace(/\s+/g, '\\s+')).join('|');
+  const fnPattern = SQL_FUNCTIONS.slice().sort((a,b) => b.length - a.length).join('|');
+
+  // Each pattern uses NON-CAPTURING (?:...) for any inner alternation, so
+  // each entry contributes exactly ONE capture group to the combined regex.
+  // This keeps the group-to-pattern mapping 1:1 (group i === patterns[i-1]).
+  const patterns = [
+    [/--.*$/gm, 'comment'],
+    [/\/\*[\s\S]*?\*\//g, 'comment'],
+    [/'(?:[^']|'')*'/g, 'string'],
+    [/"(?:[^"]|"")*"/g, 'string'],
+    [/\b\d+\.?\d*\b/g, 'number'],
+    [new RegExp('\\b(?:' + kwPattern + ')\\b', 'gi'), 'keyword'],
+    [new RegExp('\\b(?:' + fnPattern + ')\\b(?=\\s*\\()', 'gi'), 'function'],
+    [/[(),;.=<>!+\-*/%]/g, 'punct']
+  ];
+
+  // Combine all patterns into one regex. 'm' flag is required so that
+  // the `--.*$` line-comment pattern can match end-of-line (not just end-of-string).
+  const combined = new RegExp(patterns.map(p => '(' + p[0].source + ')').join('|'), 'gim');
+
+  let result = '';
+  let lastIdx = 0;
+  let m;
+  while ((m = combined.exec(code)) !== null) {
+    // Append any skipped text (whitespace, etc.) between matches, HTML-escaped.
+    result += escapeHtml(code.slice(lastIdx, m.index));
+    // Find the first capture group that matched → maps to its pattern.
+    for (let i = 1; i <= patterns.length; i++) {
+      if (m[i] !== undefined) {
+        const cls = patterns[i-1][1];
+        result += '<span class="tok-' + cls + '">' + escapeHtml(m[i]) + '</span>';
+        break;
+      }
+    }
+    lastIdx = combined.lastIndex;
+    // Guard against zero-length match infinite loops.
+    if (m.index === combined.lastIndex) combined.lastIndex++;
+  }
+  result += escapeHtml(code.slice(lastIdx));
+  return result;
+}
+
+// Apply highlighting to every <code class="sql"> block
+document.querySelectorAll('code.sql').forEach(el => {
+  el.innerHTML = highlightSQL(el.textContent);
+});
+
+// ============ COPY BUTTONS ============
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const codeEl = btn.closest('.code-block').querySelector('code');
+    const text = codeEl.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1500);
+    } catch (e) {
+      btn.textContent = 'Error';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    }
+  });
+});
+
+// ============ SCROLL SPY (active sidebar link) ============
+const sidebarLinks = document.querySelectorAll('.sidebar-link');
+const topics = document.querySelectorAll('.topic');
+
+const spyObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      sidebarLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+topics.forEach(t => spyObserver.observe(t));
+
+// ============ FADE-IN ON SCROLL ============
+const fadeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      fadeObserver.unobserve(entry.target);
+    }
+  });
+}, { rootMargin: '0px 0px -50px 0px', threshold: 0.05 });
+
+topics.forEach(t => fadeObserver.observe(t));
+
+// ============ PROGRESS BAR ============
+const progressBar = document.getElementById('progressBar');
+function updateProgress() {
+  const scrolled = window.scrollY;
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = total > 0 ? (scrolled / total) * 100 : 0;
+  progressBar.style.width = Math.min(pct, 100) + '%';
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+updateProgress();
+
+// ============ BACK TO TOP ============
+const backTop = document.getElementById('backTop');
+window.addEventListener('scroll', () => {
+  backTop.classList.toggle('visible', window.scrollY > 600);
+}, { passive: true });
+backTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ============ SEARCH / FILTER ============
+const searchInput = document.getElementById('searchInput');
+const noResults = document.getElementById('noResults');
+
+searchInput.addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  let visibleCount = 0;
+
+  topics.forEach(topic => {
+    if (!q) {
+      topic.classList.remove('hidden');
+      visibleCount++;
+      return;
+    }
+    const text = topic.textContent.toLowerCase();
+    if (text.includes(q)) {
+      topic.classList.remove('hidden');
+      visibleCount++;
+    } else {
+      topic.classList.add('hidden');
+    }
+  });
+
+  noResults.classList.toggle('show', visibleCount === 0 && q !== '');
+});
+
+// Keyboard shortcut: cmd/ctrl + K to focus search
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  }
+  if (e.key === 'Escape' && document.activeElement === searchInput) {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input'));
+    searchInput.blur();
+  }
+});
+
+// ============ MOBILE MENU ============
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+menuToggle?.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+});
+sidebarLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 1024) sidebar.classList.remove('open');
+  });
+});
+</script>
+
+</body>
+</html>
